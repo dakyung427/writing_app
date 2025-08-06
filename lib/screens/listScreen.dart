@@ -53,7 +53,7 @@ class ListScreen extends StatelessWidget {
               ),
             ),
             const Positioned(
-              left: 160,
+              left: 140,
               top: 343,
               child: Text(
                 '랜덤 주제 글쓰기',
@@ -72,3 +72,4 @@ class ListScreen extends StatelessWidget {
     );
   }
 }
+
