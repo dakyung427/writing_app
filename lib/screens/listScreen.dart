@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'NovelSaveScreen.dart';
-import 'randomNovelSaveScreen.dart';
 
 class ListScreen extends StatelessWidget {
   const ListScreen({super.key});
@@ -53,28 +52,17 @@ class ListScreen extends StatelessWidget {
                 ),
               ),
             ),
-            Positioned(
+            const Positioned(
               left: 160,
               top: 343,
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          const RandomNovelSaveScreen(),
-                    ),
-                  );
-                },
-                child: const Text(
-                  '랜덤주제 글쓰기',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 20,
-                    fontFamily: 'Cafe24 Oneprettynight',
-                    fontWeight: FontWeight.w400,
-                  ),
+              child: Text(
+                '랜덤 주제 글쓰기',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 20,
+                  fontFamily: 'Cafe24 Oneprettynight',
+                  fontWeight: FontWeight.w400,
                 ),
               ),
             ),
@@ -84,7 +72,3 @@ class ListScreen extends StatelessWidget {
     );
   }
 }
-
-
-
-
