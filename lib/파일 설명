@@ -1,0 +1,29 @@
+global : 글 저장목록 유지를 위해 쓰는 전역함수
+
+screens/NovelSaveScreen.dart
+: 저장된 글 목록 페이지
+
+screens/writingPage.dart
+: 글 쓰기 페이지 (글 수정 및 저장시 마지막 수정 시간 갱신되는 기능은 아직 구현 X)
+
+screens/listScreen.dart
+: 어플의 처음 목록 화면
+
+screens/loadingScreen
+: 어플 로딩 화면
+
+assets/font/Cafe~~~.ttf
+: 어플 기본 폰트. 예전에 했던 것처름 pupsec.yaml에 
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/font/
+
+  fonts:
+    - family: Cafe24 Oneprettynight
+      fonts:
+        - asset: assets/font/Cafe24Oneprettynight.ttf
+
+
+추가해주면 돼
