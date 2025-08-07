@@ -1,23 +1,61 @@
 import 'package:flutter/material.dart';
 import 'writingPage.dart';
+import 'package:intl/intl.dart';
 import '../global.dart' as globals;
 
 class NovelSaveScreen extends StatefulWidget {
-  const NovelSaveScreen({super.key});
+  final String? initialSelectedDate;
+
+  const NovelSaveScreen({super.key, this.initialSelectedDate});
 
   @override
   State<NovelSaveScreen> createState() => _NovelSaveScreenState();
 }
 
 class _NovelSaveScreenState extends State<NovelSaveScreen> {
+  late List<String> _recentDates;
+  String? _selectedDate;
   int? _selectedIndex;
   bool _showDeleteDialog = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _recentDates = _generateRecentDates(30);
+
+    // 전달받은 날짜가 리스트에 없으면 맨 앞에 추가
+    if (widget.initialSelectedDate != null) {
+      if (!_recentDates.contains(widget.initialSelectedDate)) {
+        _recentDates.insert(0, widget.initialSelectedDate!);
+      }
+    }
+
+    // 초기 선택 날짜 설정
+    if (widget.initialSelectedDate != null) {
+      _selectedDate = widget.initialSelectedDate;
+    } else {
+      _selectedDate = _recentDates.first;
+    }
+  }
+
+  List<String> _generateRecentDates(int days) {
+    final today = DateTime.now();
+    return List.generate(days, (index) {
+      final date = today.subtract(Duration(days: index));
+      return DateFormat('yyyy-MM-dd').format(date);
+    });
+  }
+
+  List<Map<String, String>> get _writingsForSelectedDate {
+    if (_selectedDate == null) return [];
+    return globals.savedWritings[_selectedDate!] ?? [];
+  }
 
   String getUntitledLabel(int index) => '무제 ${index + 1}';
 
   void _deleteSelected() {
-    if (_selectedIndex != null) {
-      globals.savedWritings.removeAt(_selectedIndex!);
+    if (_selectedIndex != null && _selectedDate != null) {
+      globals.savedWritings[_selectedDate!]!.removeAt(_selectedIndex!);
       setState(() {
         _selectedIndex = null;
         _showDeleteDialog = false;
@@ -25,41 +63,33 @@ class _NovelSaveScreenState extends State<NovelSaveScreen> {
     }
   }
 
-Future<void> _navigateToWrite({int? index}) async {
-  final result = await Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => WritingScreen(
-        editIndex: index,
-        initialTitle: index != null
-            ? globals.savedWritings[index]['title'] ?? ''
-            : '',
-        initialContent: index != null
-            ? globals.savedWritings[index]['content'] ?? ''
-            : '',
+  Future<void> _navigateToWrite({int? index}) async {
+    final writings = _writingsForSelectedDate;
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => WritingScreen(
+          editIndex: index,
+          initialTitle: index != null ? writings[index]['title'] ?? '' : '',
+          initialContent: index != null ? writings[index]['content'] ?? '' : '',
+          initialDate: _selectedDate,
+        ),
       ),
-    ),
-  );
+    );
 
-  if (result == true) {
-    // 저장 후 돌아왔을 때
-    setState(() {
-      _selectedIndex = null;
-    });
-  } else if (result == false) {
-    // 취소 후 돌아왔을 때
-    setState(() {
-      _selectedIndex = null;
-    });
+    if (result == true || result == false) {
+      setState(() {
+        _selectedIndex = null;
+      });
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
-    final savedWritings = globals.savedWritings;
-    final selectedTitle = _selectedIndex != null
-        ? (savedWritings[_selectedIndex!]['title']?.isNotEmpty ?? false
-            ? savedWritings[_selectedIndex!]['title']!
+    final writings = _writingsForSelectedDate;
+    final selectedTitle = (_selectedIndex != null && writings.isNotEmpty)
+        ? (writings[_selectedIndex!]['title']?.isNotEmpty ?? false
+            ? writings[_selectedIndex!]['title']!
             : getUntitledLabel(_selectedIndex!))
         : '';
 
@@ -72,27 +102,10 @@ Future<void> _navigateToWrite({int? index}) async {
             decoration: const BoxDecoration(color: Colors.white),
             child: Stack(
               children: [
-                const Positioned(
-                  left: 134,
-                  top: 95,
-                  child: SizedBox(
-                    width: 135,
-                    height: 29,
-                    child: Text(
-                      '글 목록',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 20,
-                        fontFamily: 'Cafe24 Oneprettynight',
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ),
-                ),
+                // 뒤로 버튼
                 Positioned(
                   left: 18,
-                  top: 61,
+                  top: 30,
                   child: GestureDetector(
                     onTap: () {
                       if (_selectedIndex != null) {
@@ -114,9 +127,51 @@ Future<void> _navigateToWrite({int? index}) async {
                     ),
                   ),
                 ),
+
+                // 날짜 드롭다운 (중앙)
+                Positioned(
+                  left: 140,
+                  top: 30,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(6),
+                      color: Colors.white,
+                    ),
+                    child: DropdownButton<String>(
+                      value: _selectedDate,
+                      underline: const SizedBox(),
+                      icon: const Icon(Icons.arrow_drop_down),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontFamily: 'Cafe24 Oneprettynight',
+                        color: Colors.black,
+                      ),
+                      onChanged: (String? newValue) {
+                        if (newValue != null) {
+                          setState(() {
+                            _selectedDate = newValue;
+                            _selectedIndex = null;
+                            _showDeleteDialog = false;
+                          });
+                        }
+                      },
+                      items: _recentDates
+                          .map<DropdownMenuItem<String>>((String date) {
+                        return DropdownMenuItem<String>(
+                          value: date,
+                          child: Text(date),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+
+                // 글 추가 / 수정 버튼
                 Positioned(
                   left: 340,
-                  top: 61,
+                  top: 30,
                   child: GestureDetector(
                     onTap: () {
                       if (_selectedIndex != null) {
@@ -138,82 +193,114 @@ Future<void> _navigateToWrite({int? index}) async {
                     ),
                   ),
                 ),
+
+                const Positioned(
+                  left: 134,
+                  top: 95,
+                  child: SizedBox(
+                    width: 135,
+                    height: 29,
+                    child: Text(
+                      '글 목록',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 20,
+                        fontFamily: 'Cafe24 Oneprettynight',
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                ),
+
                 Positioned(
                   top: 175,
                   left: 0,
                   right: 0,
                   bottom: 0,
-                  child: ListView.builder(
-                    itemCount: savedWritings.length,
-                    itemBuilder: (context, index) {
-                      final writing = savedWritings[index];
-                      final title = writing['title']?.trim();
-                      final content = writing['content']?.trim();
-                      final displayTitle = (title == null || title.isEmpty)
-                          ? getUntitledLabel(index)
-                          : title;
-                      final isSelected = _selectedIndex == index;
-
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _selectedIndex = isSelected ? null : index;
-                            _showDeleteDialog = false;
-                          });
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 42, vertical: 10),
-                          child: Container(
-                            width: 318,
-                            height: 170,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              border: Border.all(
-                                color: isSelected
-                                    ? const Color(0xFFE81F1F)
-                                    : const Color(0xFFA29794),
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    displayTitle,
-                                    style: const TextStyle(
-                                      fontSize: 20,
-                                      fontFamily: 'Cafe24 Oneprettynight',
-                                      color: Colors.black,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    content ?? '',
-                                    maxLines: 3,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontFamily: 'Cafe24 Oneprettynight',
-                                      color: Color(0xFF797979),
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ],
-                              ),
+                  child: writings.isEmpty
+                      ? const Center(
+                          child: Text(
+                            '선택한 날짜에 저장된 글이 없습니다.',
+                            style: TextStyle(
+                              fontFamily: 'Cafe24 Oneprettynight',
+                              fontSize: 18,
+                              color: Colors.grey,
                             ),
                           ),
+                        )
+                      : ListView.builder(
+                          itemCount: writings.length,
+                          itemBuilder: (context, index) {
+                            final writing = writings[index];
+                            final title = writing['title']?.trim();
+                            final content = writing['content']?.trim();
+                            final displayTitle = (title == null || title.isEmpty)
+                                ? getUntitledLabel(index)
+                                : title;
+                            final isSelected = _selectedIndex == index;
+
+                            return GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _selectedIndex = isSelected ? null : index;
+                                  _showDeleteDialog = false;
+                                });
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 42, vertical: 10),
+                                child: Container(
+                                  width: 318,
+                                  height: 170,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? const Color(0xFFE81F1F)
+                                          : const Color(0xFFA29794),
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          displayTitle,
+                                          style: const TextStyle(
+                                            fontSize: 20,
+                                            fontFamily: 'Cafe24 Oneprettynight',
+                                            color: Colors.black,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                        const SizedBox(height: 12),
+                                        Text(
+                                          content ?? '',
+                                          maxLines: 3,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontFamily: 'Cafe24 Oneprettynight',
+                                            color: Color(0xFF797979),
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
                 ),
               ],
             ),
           ),
+
           if (_showDeleteDialog)
             Positioned(
               left: 43,
@@ -234,7 +321,7 @@ Future<void> _navigateToWrite({int? index}) async {
                         text: TextSpan(
                           children: [
                             TextSpan(
-                              text: '$selectedTitle ',
+                              text: selectedTitle + ' ',
                               style: const TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
@@ -298,4 +385,3 @@ Future<void> _navigateToWrite({int? index}) async {
     );
   }
 }
-

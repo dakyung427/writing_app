@@ -1,16 +1,20 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../global.dart' as globals;
 
 class WritingScreen extends StatefulWidget {
   final int? editIndex;
   final String initialTitle;
   final String initialContent;
+  final String? initialDate;
 
   const WritingScreen({
     super.key,
     this.editIndex,
     this.initialTitle = '',
     this.initialContent = '',
+    this.initialDate,
   });
 
   @override
@@ -21,12 +25,56 @@ class _WritingScreenState extends State<WritingScreen> {
   late TextEditingController _titleController;
   late TextEditingController _contentController;
   String? _errorMessage;
+  late DateTime _selectedDate;
+
+  Timer? _timer;
+  Duration _elapsed = Duration.zero;
+  bool _isTimerRunning = false;
+  bool _hasTimerStarted = false;
 
   @override
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.initialTitle);
     _contentController = TextEditingController(text: widget.initialContent);
+    _selectedDate = widget.initialDate != null
+        ? DateTime.parse(widget.initialDate!)
+        : DateTime.now();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _titleController.dispose();
+    _contentController.dispose();
+    super.dispose();
+  }
+
+  void _toggleTimer() {
+    if (_isTimerRunning) {
+      _timer?.cancel();
+      setState(() {
+        _isTimerRunning = false;
+      });
+    } else {
+      setState(() {
+        _elapsed = Duration.zero;
+        _isTimerRunning = true;
+        _hasTimerStarted = true;
+      });
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        setState(() {
+          _elapsed += const Duration(seconds: 1);
+        });
+      });
+    }
+  }
+
+  String _formatDuration(Duration d) {
+    final hours = d.inHours.toString().padLeft(2, '0');
+    final minutes = (d.inMinutes % 60).toString().padLeft(2, '0');
+    final seconds = (d.inSeconds % 60).toString().padLeft(2, '0');
+    return '$hours:$minutes:$seconds';
   }
 
   void _saveWriting() {
@@ -40,19 +88,25 @@ class _WritingScreenState extends State<WritingScreen> {
       return;
     }
 
+    final dateKey = DateFormat('yyyy-MM-dd').format(_selectedDate);
+
+    if (!globals.savedWritings.containsKey(dateKey)) {
+      globals.savedWritings[dateKey] = [];
+    }
+
     if (widget.editIndex != null) {
-      globals.savedWritings[widget.editIndex!] = {
+      globals.savedWritings[dateKey]![widget.editIndex!] = {
         'title': title,
         'content': content,
       };
     } else {
-      globals.savedWritings.add({
+      globals.savedWritings[dateKey]!.add({
         'title': title,
         'content': content,
       });
     }
 
-    Navigator.pop(context, true); // true 반환 → 목록 화면에서 새로고침
+    Navigator.pop(context, true);
   }
 
   @override
@@ -66,8 +120,70 @@ class _WritingScreenState extends State<WritingScreen> {
         child: Stack(
           children: [
             Positioned(
+              left: 0,
+              right: 0,
+              top: 30,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context, false),
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        '닫기',
+                        style: TextStyle(
+                          color: Color(0xFFA0A0A0),
+                          fontSize: 20,
+                          fontFamily: 'Cafe24 Oneprettynight',
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: _toggleTimer,
+                    child: Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: _isTimerRunning
+                            ? const Color.fromARGB(255, 237, 140, 140)
+                            : const Color.fromARGB(255, 119, 210, 122),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        _isTimerRunning ? '타이머 중지' : '타이머 시작',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontFamily: 'Cafe24 Oneprettynight',
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: _saveWriting,
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        '저장',
+                        style: TextStyle(
+                          color: Color(0xFFA0A0A0),
+                          fontSize: 20,
+                          fontFamily: 'Cafe24 Oneprettynight',
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Positioned(
               left: 149,
-              top: 95,
+              top: 120,
               child: SizedBox(
                 width: 106,
                 height: 71,
@@ -87,29 +203,39 @@ class _WritingScreenState extends State<WritingScreen> {
                 ),
               ),
             ),
-            const Positioned(
-              left: 16,
-              top: 135,
-              child: SizedBox(
-                width: 236,
-                height: 25,
+            if (_errorMessage != null)
+              Positioned(
+                left: 16,
+                top: 195,
                 child: Text(
-                  '마지막 수정 시간: 2025/ 7/ 25',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 16,
+                  _errorMessage!,
+                  style: const TextStyle(
+                    color: Colors.red,
+                    fontSize: 14,
                     fontFamily: 'Cafe24 Oneprettynight',
-                    fontWeight: FontWeight.w400,
                   ),
                 ),
               ),
-            ),
+            if (_hasTimerStarted)
+              Positioned(
+                right: 20,
+                top: 90,
+                child: Text(
+                  _formatDuration(_elapsed),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Cafe24 Oneprettynight',
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
             Positioned(
               left: 16,
-              top: 171,
+              top: 215,
               child: Container(
                 width: 371,
-                height: 667,
+                height: 623,
                 decoration: ShapeDecoration(
                   color: Colors.white,
                   shape: RoundedRectangleBorder(
@@ -141,61 +267,9 @@ class _WritingScreenState extends State<WritingScreen> {
                 ),
               ),
             ),
-            Positioned(
-              left: 350,
-              top: 61,
-              child: GestureDetector(
-                onTap: _saveWriting,
-                child: const Text(
-                  '저장',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Color(0xFFA0A0A0),
-                    fontSize: 20,
-                    fontFamily: 'Cafe24 Oneprettynight',
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              left: 18,
-              top: 61,
-              child: GestureDetector(
-                onTap: () => Navigator.pop(context, false),
-                child: const Text(
-                  '닫기',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Color(0xFFA0A0A0),
-                    fontSize: 20,
-                    fontFamily: 'Cafe24 Oneprettynight',
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ),
-            ),
-            if (_errorMessage != null)
-              Positioned(
-                left: 16,
-                top: 150,
-                child: Text(
-                  _errorMessage!,
-                  style: const TextStyle(
-                    color: Colors.red,
-                    fontSize: 14,
-                    fontFamily: 'Cafe24 Oneprettynight',
-                  ),
-                ),
-              ),
           ],
         ),
       ),
     );
   }
 }
-
-
-
-
-

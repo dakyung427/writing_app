@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'NovelSaveScreen.dart';
+import 'calendar_screen.dart';
 
 class ListScreen extends StatelessWidget {
   const ListScreen({super.key});
@@ -66,10 +67,33 @@ class ListScreen extends StatelessWidget {
                 ),
               ),
             ),
+            Positioned(
+              left: 165,
+              top: 420,
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CalendarScreen(),
+                    ),
+                  );
+                },
+                child: const Text(
+                  '달력 보기',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 20,
+                    fontFamily: 'Cafe24 Oneprettynight',
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 }
-
