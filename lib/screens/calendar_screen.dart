@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
-import 'NovelSaveScreen.dart';  // 파일 경로에 맞게 수정하세요.
+import 'NovelSaveScreen.dart';  
 
 class CalendarScreen extends StatefulWidget {
   @override
@@ -16,6 +16,24 @@ class _CalendarScreenState extends State<CalendarScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: TextButton(
+          onPressed: () {
+            Navigator.pop(context); 
+          },
+          style: ButtonStyle(
+            overlayColor: MaterialStateProperty.all(Colors.transparent), 
+            foregroundColor: MaterialStateProperty.all(Colors.black),   
+            padding: MaterialStateProperty.all(EdgeInsets.zero),         
+            minimumSize: MaterialStateProperty.all(Size(50, 40)),      
+          ),
+          child: const Text(
+            '뒤로',
+            style: TextStyle(
+              fontSize: 16,
+              fontFamily: 'Cafe24 Oneprettynight',
+            ),
+          ),
+        ),
         title: const Text(
           '',
           style: TextStyle(
@@ -26,7 +44,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
         ),
         backgroundColor: Colors.white,
         elevation: 1,
-        iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: Column(
         children: [
@@ -41,10 +58,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 _focusedDay = focusedDay;
               });
 
-              // 선택한 날짜를 'yyyy-MM-dd' 형식으로 변환
               final selectedDateString = DateFormat('yyyy-MM-dd').format(selectedDay);
 
-              // 노블세이브스크린으로 날짜 전달하며 이동
               Navigator.push(
                 context,
                 MaterialPageRoute(

@@ -22,15 +22,11 @@ class _NovelSaveScreenState extends State<NovelSaveScreen> {
   void initState() {
     super.initState();
     _recentDates = _generateRecentDates(30);
-
-    // 전달받은 날짜가 리스트에 없으면 맨 앞에 추가
     if (widget.initialSelectedDate != null) {
       if (!_recentDates.contains(widget.initialSelectedDate)) {
         _recentDates.insert(0, widget.initialSelectedDate!);
       }
     }
-
-    // 초기 선택 날짜 설정
     if (widget.initialSelectedDate != null) {
       _selectedDate = widget.initialSelectedDate;
     } else {
@@ -102,7 +98,6 @@ class _NovelSaveScreenState extends State<NovelSaveScreen> {
             decoration: const BoxDecoration(color: Colors.white),
             child: Stack(
               children: [
-                // 뒤로 버튼
                 Positioned(
                   left: 18,
                   top: 30,
@@ -127,8 +122,6 @@ class _NovelSaveScreenState extends State<NovelSaveScreen> {
                     ),
                   ),
                 ),
-
-                // 날짜 드롭다운 (중앙)
                 Positioned(
                   left: 140,
                   top: 30,
@@ -167,8 +160,6 @@ class _NovelSaveScreenState extends State<NovelSaveScreen> {
                     ),
                   ),
                 ),
-
-                // 글 추가 / 수정 버튼
                 Positioned(
                   left: 340,
                   top: 30,
@@ -193,7 +184,6 @@ class _NovelSaveScreenState extends State<NovelSaveScreen> {
                     ),
                   ),
                 ),
-
                 const Positioned(
                   left: 134,
                   top: 95,
@@ -212,7 +202,6 @@ class _NovelSaveScreenState extends State<NovelSaveScreen> {
                     ),
                   ),
                 ),
-
                 Positioned(
                   top: 175,
                   left: 0,
@@ -235,6 +224,7 @@ class _NovelSaveScreenState extends State<NovelSaveScreen> {
                             final writing = writings[index];
                             final title = writing['title']?.trim();
                             final content = writing['content']?.trim();
+                            final elapsedTime = writing['elapsedTime'] ?? '';
                             final displayTitle = (title == null || title.isEmpty)
                                 ? getUntitledLabel(index)
                                 : title;
@@ -265,16 +255,36 @@ class _NovelSaveScreenState extends State<NovelSaveScreen> {
                                   child: Padding(
                                     padding: const EdgeInsets.all(12),
                                     child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      crossAxisAlignment: CrossAxisAlignment.center,
                                       children: [
-                                        Text(
-                                          displayTitle,
-                                          style: const TextStyle(
-                                            fontSize: 20,
-                                            fontFamily: 'Cafe24 Oneprettynight',
-                                            color: Colors.black,
-                                          ),
-                                          textAlign: TextAlign.center,
+                                        Stack(
+                                          children: [
+                                            SizedBox(
+                                              width: double.infinity,
+                                              child: Text(
+                                                displayTitle,
+                                                style: const TextStyle(
+                                                  fontSize: 20,
+                                                  fontFamily: 'Cafe24 Oneprettynight',
+                                                  color: Colors.black,
+                                                ),
+                                                textAlign: TextAlign.center,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            if (elapsedTime.isNotEmpty)
+                                              Positioned(
+                                                right: 0,
+                                                child: Text(
+                                                  elapsedTime,
+                                                  style: const TextStyle(
+                                                    fontSize: 14,
+                                                    fontFamily: 'Cafe24 Oneprettynight',
+                                                    color: Color(0xFF797979),
+                                                  ),
+                                                ),
+                                              ),
+                                          ],
                                         ),
                                         const SizedBox(height: 12),
                                         Text(
@@ -300,7 +310,6 @@ class _NovelSaveScreenState extends State<NovelSaveScreen> {
               ],
             ),
           ),
-
           if (_showDeleteDialog)
             Positioned(
               left: 43,

@@ -40,14 +40,34 @@ class _WritingScreenState extends State<WritingScreen> {
     _selectedDate = widget.initialDate != null
         ? DateTime.parse(widget.initialDate!)
         : DateTime.now();
+
+    final editIndex = widget.editIndex;
+    if (editIndex != null) {
+      final dateKey = DateFormat('yyyy-MM-dd').format(_selectedDate);
+      final writings = globals.savedWritings[dateKey];
+      if (writings != null && editIndex < writings.length) {
+        final savedElapsed = writings[editIndex]['elapsedTime'];
+        if (savedElapsed is String) {
+          _elapsed = _parseDuration(savedElapsed);
+          if (_elapsed > Duration.zero) {
+            _hasTimerStarted = true;
+          }
+        }
+      }
+    }
   }
 
-  @override
-  void dispose() {
-    _timer?.cancel();
-    _titleController.dispose();
-    _contentController.dispose();
-    super.dispose();
+  Duration _parseDuration(String s) {
+    try {
+      final parts = s.split(':');
+      if (parts.length == 3) {
+        final hours = int.parse(parts[0]);
+        final minutes = int.parse(parts[1]);
+        final seconds = int.parse(parts[2]);
+        return Duration(hours: hours, minutes: minutes, seconds: seconds);
+      }
+    } catch (e) {}
+    return Duration.zero;
   }
 
   void _toggleTimer() {
@@ -58,7 +78,6 @@ class _WritingScreenState extends State<WritingScreen> {
       });
     } else {
       setState(() {
-        _elapsed = Duration.zero;
         _isTimerRunning = true;
         _hasTimerStarted = true;
       });
@@ -94,19 +113,35 @@ class _WritingScreenState extends State<WritingScreen> {
       globals.savedWritings[dateKey] = [];
     }
 
+    String? elapsedTimeStr;
+    if (_hasTimerStarted) {
+      elapsedTimeStr = _formatDuration(_elapsed);
+    }
+
+    final writingData = {
+      'title': title,
+      'content': content,
+    };
+
+    if (elapsedTimeStr != null) {
+      writingData['elapsedTime'] = elapsedTimeStr;
+    }
+
     if (widget.editIndex != null) {
-      globals.savedWritings[dateKey]![widget.editIndex!] = {
-        'title': title,
-        'content': content,
-      };
+      globals.savedWritings[dateKey]![widget.editIndex!] = writingData;
     } else {
-      globals.savedWritings[dateKey]!.add({
-        'title': title,
-        'content': content,
-      });
+      globals.savedWritings[dateKey]!.add(writingData);
     }
 
     Navigator.pop(context, true);
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _titleController.dispose();
+    _contentController.dispose();
+    super.dispose();
   }
 
   @override
