@@ -24,8 +24,10 @@ flutter:
 
   assets:
     - assets/font/
+    - assets/random.json
 
   fonts:
     - family: Cafe24 Oneprettynight
       fonts:
         - asset: assets/font/Cafe24Oneprettynight.ttf
+
