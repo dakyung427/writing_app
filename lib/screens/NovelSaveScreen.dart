@@ -373,6 +373,7 @@ class _NovelSaveScreenState extends State<NovelSaveScreen> {
                         onTap: () {
                           setState(() {
                             _showDeleteDialog = false;
+                            _selectedIndex = null;
                           });
                         },
                         child: const Text(
