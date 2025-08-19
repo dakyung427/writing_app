@@ -13,6 +13,9 @@ dependencies:
   cupertino_icons: ^1.0.8
   table_calendar: ^3.0.9
   http: ^1.4.0
+  path_provider: ^2.1.5
+  pdf: ^3.11.3
+  printing: ^5.14.2
 
 dev_dependencies:
   flutter_test:
@@ -30,4 +33,8 @@ flutter:
     - family: Cafe24 Oneprettynight
       fonts:
         - asset: assets/font/Cafe24Oneprettynight.ttf
+    - family: NanumMyeongjo
+      fonts:
+        - asset: assets/font/NanumMyeongjo.ttf
+
 
