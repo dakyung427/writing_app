@@ -16,6 +16,9 @@ dependencies:
   path_provider: ^2.1.5
   pdf: ^3.11.3
   printing: ^5.14.2
+  image_picker: ^1.2.0
+  file_picker: ^10.3.1
+  shared_preferences: ^2.5.3
 
 dev_dependencies:
   flutter_test:
@@ -36,5 +39,6 @@ flutter:
     - family: NanumMyeongjo
       fonts:
         - asset: assets/font/NanumMyeongjo.ttf
+
 
 
