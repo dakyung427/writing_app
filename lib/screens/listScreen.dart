@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'NovelSaveScreen.dart';
 import 'randomNovelSaveScreen.dart';
 import 'calendar_screen.dart';
+import 'transcribeSavePage.dart';
+import '../api/GoogleImageAPI.dart';
 
 class ListScreen extends StatelessWidget {
   const ListScreen({super.key});
@@ -105,9 +107,34 @@ class ListScreen extends StatelessWidget {
                 ),
               ),
             ),
+            Positioned(
+  left: 170,
+  top: 500,
+  child: GestureDetector(
+    onTap: () {
+Navigator.push(
+  context,
+  MaterialPageRoute(
+    builder: (context) => TranscribeSavePage(extractedText: 'extractedText'),
+  ),
+);
+    },
+    child: const Text(
+      '필사하기',
+      textAlign: TextAlign.center,
+      style: TextStyle(
+        color: Colors.black,
+        fontSize: 20,
+        fontFamily: 'Cafe24 Oneprettynight',
+        fontWeight: FontWeight.w400,
+      ),
+    ),
+  ),
+),
           ],
         ),
       ),
     );
   }
 }
+
